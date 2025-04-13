@@ -1,0 +1,34 @@
+数据预处理 (Spark实现)
+2.1 批处理清洗 (pyspark_preprocessing.py)
+
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, when, hour, dayofweek
+from pyspark.ml.feature import VectorAssembler, StandardScaler
+
+def preprocess_data(spark, raw_data_path):
+    # 初始化Spark会话
+    spark = SparkSession.builder.appName("TrafficPreprocessing").getOrCreate()
+    
+    # 读取多源数据
+    df = spark.read.parquet(raw_data_path)
+    
+    # 数据清洗
+    df_clean = df.na.fill(0) \
+        .filter((col("speed") > 0) & (col("speed") <= 120)) \
+        .withColumn("is_weekend", when(dayofweek("timestamp").isin(1, 7), 1).otherwise(0)) \
+        .withColumn("hour_of_day", hour("timestamp"))
+    
+    # 特征工程
+    feature_cols = ["speed", "volume", "hour_of_day", "is_weekend", "temperature", "precipitation"]
+    assembler = VectorAssembler(inputCols=feature_cols, outputCol="raw_features")
+    scaler = StandardScaler(inputCol="raw_features", outputCol="features")
+    
+    # 管道处理
+    pipeline = Pipeline(stages=[assembler, scaler])
+    model = pipeline.fit(df_clean)
+    return model.transform(df_clean)
+
+# 使用示例
+spark = SparkSession.builder.getOrCreate()
+processed_df = preprocess_data(spark, "hdfs://traffic_data/raw/")

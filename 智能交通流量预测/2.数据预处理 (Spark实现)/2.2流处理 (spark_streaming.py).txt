@@ -1,0 +1,38 @@
+2.2 流处理 (spark_streaming.py)
+
+
+
+
+
+
+from pyspark.sql import SparkSession
+from pyspark.sql.types import *
+
+spark = SparkSession.builder.appName("TrafficStreaming").getOrCreate()
+
+# 定义流数据模式
+schema = StructType([
+    StructField("sensor_id", StringType()),
+    StructField("speed", DoubleType()),
+    StructField("volume", IntegerType()),
+    StructField("timestamp", TimestampType())
+])
+
+# 从Kafka读取流数据
+stream_df = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", "kafka:9092") \
+    .option("subscribe", "traffic_updates") \
+    .load() \
+    .selectExpr("CAST(value AS STRING) as json") \
+    .select(from_json("json", schema).alias("data")) \
+    .select("data.*")
+
+# 实时处理
+def process_batch(batch_df, batch_id):
+    batch_df.write.mode("append").parquet("hdfs://traffic_data/stream_processed/")
+
+stream_df.writeStream \
+    .foreachBatch(process_batch) \
+    .start() \
+    .awaitTermination()

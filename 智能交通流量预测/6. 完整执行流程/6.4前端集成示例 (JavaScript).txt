@@ -1,0 +1,16 @@
+6.4 前端集成示例 (JavaScript)
+
+
+fetch('http://api-server:5000/predict', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+        features: [45, 300, 18, 0, 22, 0],  // 速度,流量,小时,是否周末,温度,降水
+        current_queues: [10, 5, 3, 8]
+    })
+})
+.then(response => response.json())
+.then(data => {
+    console.log("预测结果:", data.predicted_flow);
+    console.log("建议绿灯时长:", data.optimal_greens);
+});

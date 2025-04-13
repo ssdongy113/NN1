@@ -1,0 +1,28 @@
+3.2 时空图神经网络 (stgcn.py)
+
+
+
+import torch
+import torch.nn as nn
+from torch_geometric.nn import GATConv
+
+class STGCN(nn.Module):
+    def __init__(self, num_nodes, node_features, time_steps):
+        super().__init__()
+        self.gat = GATConv(node_features, 16, heads=3)
+        self.temporal_conv = nn.Conv1d(16, 32, kernel_size=3)
+        self.fc = nn.Linear(32 * time_steps, num_nodes)
+        
+    def forward(self, x, edge_index):
+        # x shape: (batch_size, num_nodes, time_steps, features)
+        batch_size = x.size(0)
+        
+        # 空间维度处理
+        spatial_features = []
+        for t in range(x.size(2)):
+            spatial_features.append(self.gat(x[:,:,t,:], edge_index))
+        spatial_features = torch.stack(spatial_features, dim=2)  # (batch, nodes, time, features)
+        
+        # 时间维度处理
+        temporal_out = self.temporal_conv(spatial_features.permute(0,3,1,2))  # (batch, channels, nodes, time)
+        return self.fc(temporal_out.reshape(batch_size, -1))
