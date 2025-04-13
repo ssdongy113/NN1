@@ -1,8 +1,0 @@
-6.1启动数据处理集群
-
-
-# 启动Spark批处理
-spark-submit --master yarn pyspark_preprocessing.py
-
-# 启动流处理
-nohup spark-submit spark_streaming.py &

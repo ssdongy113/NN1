@@ -1,4 +1,0 @@
-6.3部署API服务
-
-
-gunicorn -w 4 -b :5000 flask_api:app
