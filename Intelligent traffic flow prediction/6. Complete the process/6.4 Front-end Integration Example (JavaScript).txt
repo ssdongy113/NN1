@@ -1,0 +1,13 @@
+fetch('http://api-server:5000/predict', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+        features: [45, 300, 18, 0, 22, 0],  // speed, volume, hour, is_weekend, temperature, precipitation
+        current_queues: [10, 5, 3, 8]
+    })
+})
+.then(response => response.json())
+.then(data => {
+    console.log("Prediction result:", data.predicted_flow);
+    console.log("Recommended green light durations:", data.optimal_greens);
+});

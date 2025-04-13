@@ -1,0 +1,49 @@
+import torch
+import torch.nn as nn
+from torch_geometric.nn import GATConv
+
+class STGCN(nn.Module):
+    def __init__(self, num_nodes, node_features, time_steps):
+        """
+        Initialize the Spatio-Temporal Graph Convolutional Network (STGCN) model.
+
+        Parameters:
+        - num_nodes: Number of nodes in the graph.
+        - node_features: Number of features per node.
+        - time_steps: Number of time steps in the input data.
+        """
+        super(STGCN, self).__init__()
+        self.gat = GATConv(node_features, 16, heads=3)  # Graph Attention Convolution
+        self.temporal_conv = nn.Conv1d(16, 32, kernel_size=3)  # Temporal Convolution
+        self.fc = nn.Linear(32 * time_steps, num_nodes)  # Fully Connected Layer
+
+    def forward(self, x, edge_index):
+        """
+        Forward pass through the STGCN model.
+
+        Parameters:
+        - x: Input data with shape (batch_size, num_nodes, time_steps, features).
+        - edge_index: Edge indices for the graph convolution.
+
+        Returns:
+        - Output tensor after passing through the STGCN model.
+        """
+        # x shape: (batch_size, num_nodes, time_steps, features)
+        batch_size = x.size(0)
+
+        # Spatial dimension processing
+        spatial_features = []
+        for t in range(x.size(2)):
+            spatial_features.append(self.gat(x[:, :, t, :], edge_index))
+        spatial_features = torch.stack(spatial_features, dim=2)  # (batch, nodes, time, features)
+
+        # Temporal dimension processing
+        temporal_out = self.temporal_conv(spatial_features.permute(0, 3, 1, 2))  # (batch, channels, nodes, time)
+        return self.fc(temporal_out.reshape(batch_size, -1))
+
+# Example usage
+# Assuming `num_nodes`, `node_features`, and `time_steps` are defined
+# model = STGCN(num_nodes, node_features, time_steps)
+# x = torch.randn(batch_size, num_nodes, time_steps, node_features)
+# edge_index = torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]], dtype=torch.long)
+# output = model(x, edge_index)

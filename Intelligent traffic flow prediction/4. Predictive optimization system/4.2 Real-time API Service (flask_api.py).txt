@@ -1,0 +1,28 @@
+from flask import Flask, request, jsonify
+import torch
+import numpy as np
+
+app = Flask(__name__)
+model = torch.load('models/traffic_lstm.pt')
+model.eval()
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    """
+    Handle POST requests to the /predict endpoint.
+
+    This function receives JSON data containing traffic features and current queue lengths,
+    uses the pre-trained model to make predictions, and returns the predicted traffic flow
+    along with optimized traffic signal durations.
+    """
+    data = request.json
+    input_data = torch.tensor(data['features'], dtype=torch.float32)
+    with torch.no_grad():
+        prediction = model(input_data.unsqueeze(0))
+    return jsonify({
+        "predicted_flow": prediction.squeeze().tolist(),
+        "optimal_greens": optimize_traffic_signals(prediction, data['current_queues'])
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)

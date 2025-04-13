@@ -1,0 +1,13 @@
+graph TD
+    A[Traffic Sensors] -->|Real-time Data| B(Kafka)
+    C[GPS Data Source] --> B
+    D[Weather API] --> B
+    B --> E{Spark Streaming}
+    E --> F[Feature Engineering]
+    F --> G[Redis Real-time Storage]
+    H[Hadoop Historical Data] --> I[Spark Batch Processing]
+    I --> J[Feature Repository]
+    G & J --> K[PyTorch Model]
+    K --> L[Prediction Results]
+    L --> M[Traffic Signal Control System]
+    L --> N[Navigation App]

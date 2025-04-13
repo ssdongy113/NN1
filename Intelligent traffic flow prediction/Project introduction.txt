@@ -1,0 +1,1 @@
+Complete processes including data collection, pre-processing, modeling, predictive optimization, and real-time implementation. We will use the mainstream toolchain in the Python ecosystem (Spark + PyTorch + Flask). This is my first project, and there are a lot of bad things.

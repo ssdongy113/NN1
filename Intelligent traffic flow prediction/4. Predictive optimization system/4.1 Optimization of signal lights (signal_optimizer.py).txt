@@ -1,0 +1,42 @@
+import cvxpy as cp
+import numpy as np
+
+def optimize_traffic_signals(predicted_flows, current_queues, green_limits=(15, 60)):
+    """
+    Optimize traffic signal durations based on predicted traffic flows and current queue lengths.
+
+    Parameters:
+    - predicted_flows: Array of predicted traffic flows for each direction [veh/h].
+    - current_queues: Current queue lengths for each direction [veh].
+    - green_limits: Tuple specifying the minimum and maximum green light durations [seconds].
+
+    Returns:
+    - Optimized green light durations for each traffic phase [seconds].
+    """
+    num_phases = len(predicted_flows)
+    t_green = cp.Variable(num_phases, pos=True)  # Green light durations for each phase
+
+    # Objective function: Minimize total delay
+    objective = cp.Minimize(
+        cp.sum_squares(current_queues + 0.5 * predicted_flows * t_green / 3600 - t_green / 2) +
+        0.1 * cp.sum_squares(t_green[1:] - t_green[:-1])
+    )
+
+    # Constraints
+    constraints = [
+        cp.sum(t_green) <= 120,  # Total cycle time should not exceed 120 seconds
+        t_green >= green_limits[0],  # Minimum green light duration
+        t_green <= green_limits[1]  # Maximum green light duration
+    ]
+
+    # Solve the optimization problem
+    prob = cp.Problem(objective, constraints)
+    prob.solve(solver=cp.ECOS)
+
+    return np.round(t_green.value, 0)
+
+# Example usage
+pred_flows = np.array([800, 600, 400, 300])  # Predicted flows for East, West, South, North directions [veh/h]
+queues = np.array([12, 8, 5, 3])  # Current queue lengths [veh]
+optimal_greens = optimize_traffic_signals(pred_flows, queues)
+print("Optimized green light durations (seconds):", optimal_greens)

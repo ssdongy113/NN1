@@ -1,0 +1,43 @@
+import requests
+import pandas as pd
+from datetime import datetime
+
+class TrafficDataCollector:
+    @staticmethod
+    def get_sensor_data(api_url):
+        """Retrieve real-time data from traffic sensors API"""
+        try:
+            response = requests.get(api_url)
+            response.raise_for_status()  # Raise an error for bad status codes
+            return pd.DataFrame(response.json()['data'])
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching data from {api_url}: {e}")
+            return None
+    
+    @staticmethod
+    def get_weather_data(lat, lon, api_key):
+        """Retrieve data from OpenWeatherMap"""
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an error for bad status codes
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching weather data from {url}: {e}")
+            return None
+    
+    @staticmethod
+    def get_historical_traffic(city, days):
+        """Simulate retrieving historical data from a database"""
+        # Replace with SQL queries or Hadoop Hive operations in actual applications
+        return pd.read_parquet(f"hdfs://{city}_traffic_history.parquet")
+
+# Example usage
+collector = TrafficDataCollector()
+realtime_data = collector.get_sensor_data("http://traffic-api.la.gov/sensors")
+weather_data = collector.get_weather_data(34.05, -118.25, "your_api_key")
+
+if realtime_data is not None:
+    print("Real-time traffic data retrieved successfully.")
+if weather_data is not None:
+    print("Weather data retrieved successfully.")

@@ -1,0 +1,5 @@
+# Launch Spark batch processing
+spark-submit --master yarn pyspark_preprocessing.py
+
+# Launch stream processing
+nohup spark-submit spark_streaming.py &

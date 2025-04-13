@@ -1,0 +1,1 @@
+python lstm_model.py --data_path hdfs://traffic_data/processed/ --epochs 100
